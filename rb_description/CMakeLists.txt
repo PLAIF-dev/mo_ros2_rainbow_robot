@@ -4,7 +4,7 @@ project(rb_description)
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY launch meshes urdf
+  DIRECTORY meshes urdf
   DESTINATION share/${PROJECT_NAME}
 )
 

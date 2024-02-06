@@ -4,6 +4,10 @@
 
 #include <thread>
 #include <memory>
+#include <chrono>
+#include <vector>
+#include <iostream>
+#include <cerrno>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
@@ -40,7 +44,6 @@
 #include <fstream>
 #include <iostream>
 
-#define VERSION 20210422
 #define RB_CMD_PORT 5000
 #define RB_DATA_PORT 5001
 #define RX_DATA_SIZE 1000
@@ -54,6 +57,7 @@ public:
   RbRobot();
   void initialize();
   void rb_send_command(std::string cmd);
+  void updateJoint();
 
   int sock_data;
   int sock_command;
@@ -111,8 +115,8 @@ private:
   void handle_accepted(const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle);
   void execute(const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle);
   int connect_nonb(int sockfd, const struct sockaddr* saptr, socklen_t salen, int nsec);
-  int CreateSocket_Data(const char* addr, int port);
-  int CreateSocket_Command(const char* addr, int port);
+  std::optional<int> CreateSocket_Data(const char* addr, int port);
+  std::optional<int> CreateSocket_Command(const char* addr, int port);
   int Connect2Server_Data();
   int Connect2Server_Command();
 
@@ -120,8 +124,6 @@ private:
   void Thread_Command();
 
   void createSocket();
-
-  void updateJoint();
   void UpdateRBData();
 
   void rb_command_callback(const rb_connector::msg::RbCommand::SharedPtr msg);

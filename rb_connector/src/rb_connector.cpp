@@ -19,11 +19,14 @@ RbRobot::RbRobot()
 
 void RbRobot::initialize()
 {
-  default_ip = "10.0.2.7";
+  default_ip = "192.168.1.139";
 
-  this->set_parameter(rclcpp::Parameter("rb_connector/ip", default_ip));
+  this->declare_parameter<std::string>("ip", default_ip);
+  this->get_parameter("ip", ip);
 
-  RCLCPP_INFO(this->get_logger(), "RB IP : %s", ip.c_str());
+  this->set_parameter(rclcpp::Parameter("ip", default_ip));
+
+  RCLCPP_INFO(this->get_logger(), "RB IP : %s", default_ip.c_str());
 
   joint_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 100);
   rb_command_pub_ = this->create_publisher<rb_connector::msg::RbCommand>("/rb_command", 10);
@@ -63,33 +66,37 @@ void RbRobot::initialize()
 
 void RbRobot::createSocket()
 {
-  if (CreateSocket_Data(ip.data(), RB_DATA_PORT))
-  {
-    THREAD_T_DATA = std::thread([this] { this->Thread_Data(); });
-    if (THREAD_T_DATA.joinable() == true)
-    {
-      RCLCPP_ERROR(this->get_logger(), "Create Thread Error..(Data)");
-      return;
-    }
-  }
-  else
+  if (!CreateSocket_Data(ip.data(), RB_DATA_PORT))
   {
     RCLCPP_ERROR(this->get_logger(), "Create Socket Error..(Data)");
     return;
   }
 
-  if (CreateSocket_Command(ip.data(), RB_CMD_PORT))
+  try
   {
-    THREAD_T_COMMAND = std::thread([this] { this->Thread_Command(); });
-    if (THREAD_T_COMMAND.joinable() == true)
-    {
-      RCLCPP_ERROR(this->get_logger(), "Create Thread Error..(Command)");
-      return;
-    }
+    THREAD_T_DATA = std::thread([this] { this->Thread_Data(); });
+    RCLCPP_INFO(this->get_logger(), "Create Thread Succeed. (Data)");
   }
-  else
+  catch (const std::system_error& e)
+  {
+    RCLCPP_ERROR(this->get_logger(), "Create Thread Error..(Data): %s", e.what());
+    return;
+  }
+
+  if (!CreateSocket_Command(ip.data(), RB_CMD_PORT))
   {
     RCLCPP_ERROR(this->get_logger(), "Create Socket Error..(Command)");
+    return;
+  }
+
+  try
+  {
+    THREAD_T_COMMAND = std::thread([this] { this->Thread_Command(); });
+    RCLCPP_INFO(this->get_logger(), "Create Thread Succeed. (Command)");
+  }
+  catch (const std::system_error& e)
+  {
+    RCLCPP_ERROR(this->get_logger(), "Create Thread Error..(Command): %s", e.what());
     return;
   }
 }
@@ -156,7 +163,7 @@ void RbRobot::rb_send_command(std::string cmd)
 
     if (success)
     {
-      std::cout << "command send done" << std::endl;
+      RCLCPP_INFO(this->get_logger(), "command send done");
     }
 
     command_seq = 0;
@@ -179,7 +186,7 @@ void RbRobot::rb_command_callback(const rb_connector::msg::RbCommand::SharedPtr 
     int success = false;
     for (int i = 0; i < 2000; i++)
     {
-      usleep(1000);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       if (command_seq == 4)
       {
         success = true;
@@ -189,7 +196,7 @@ void RbRobot::rb_command_callback(const rb_connector::msg::RbCommand::SharedPtr 
 
     if (success)
     {
-      std::cout << "command execute done" << std::endl;
+      RCLCPP_INFO(this->get_logger(), "command execute done");
     }
     command_seq = 0;
     RB_DATA->command_on_passing = false;
@@ -253,20 +260,21 @@ void RbRobot::execute(const std::shared_ptr<GoalHandleFollowJointTrajectory> goa
       moveit_excute_final_pos[i] = planned_trajectory_points_[vectorSize - 1].positions[i] * R2Df;
     }
 
-    std::cout << "Trajectory size : " << vectorSize << std::endl;
+    RCLCPP_INFO(this->get_logger(), "Trajectory size : %d", vectorSize);
     text = "move_ros_j_run(0," + std::to_string(vectorSize) + ")";
     rb_send_command(text);
 
-    std::cout << "========== Trajectory transferd ==========  " << std::endl;
+    RCLCPP_INFO(this->get_logger(), "========== Trajectory transferd ==========  ");
   }
 }
 
-int RbRobot::CreateSocket_Data(const char* addr, int port)
+std::optional<int> RbRobot::CreateSocket_Data(const char* addr, int port)
 {
-  sock_data = socket(AF_INET, SOCK_STREAM, 0);
+  // 소켓 생성
+  int sock_data = socket(AF_INET, SOCK_STREAM, 0);
   if (sock_data == -1)
   {
-    return false;
+    return std::nullopt;  // 실패 시 std::nullopt 반환
   }
 
   server_data.sin_addr.s_addr = inet_addr(addr);
@@ -274,63 +282,109 @@ int RbRobot::CreateSocket_Data(const char* addr, int port)
   server_data.sin_port = htons(port);
 
   int optval = 1;
-  setsockopt(sock_data, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-  setsockopt(sock_data, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+  if (setsockopt(sock_data, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1 ||
+      setsockopt(sock_data, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1)
+  {
+    close(sock_data);  // 소켓 설정 실패 시 리소스 정리
+    return std::nullopt;
+  }
 
-  return true;
+  // 소켓 설정이 성공적으로 완료되면 소켓 파일 디스크립터 반환
+  return sock_data;
 }
-int RbRobot::CreateSocket_Command(const char* addr, int port)
+
+std::optional<int> RbRobot::CreateSocket_Command(const char* addr, int port)
 {
-  sock_command = socket(AF_INET, SOCK_STREAM, 0);
+  // 소켓 생성
+  int sock_command = socket(AF_INET, SOCK_STREAM, 0);
   if (sock_command == -1)
   {
-    return false;
+    return std::nullopt;  // 실패 시 std::nullopt 반환
   }
-  server_command.sin_family = AF_INET;
+
   server_command.sin_addr.s_addr = inet_addr(addr);
+  server_command.sin_family = AF_INET;
   server_command.sin_port = htons(port);
 
   int optval = 1;
-  setsockopt(sock_command, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-  setsockopt(sock_command, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+  if (setsockopt(sock_command, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1 ||
+      setsockopt(sock_command, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1)
+  {
+    close(sock_command);  // 소켓 설정 실패 시 리소스 정리
+    return std::nullopt;
+  }
 
-  return true;
+  // 소켓 설정이 성공적으로 완료되면 소켓 파일 디스크립터 반환
+  return sock_command;
 }
 
 int RbRobot::Connect2Server_Data()
 {
-  int ret = 0;
-  if ((ret = connect_nonb(sock_data, (struct sockaddr*)&server_data, sizeof(server_data), 5)) < 0)
+  if (sock_data == 0)
   {
-    if (ret == -10)
+    auto sock_opt = CreateSocket_Data(ip.data(), RB_DATA_PORT);
+    if (!sock_opt.has_value())
     {
-      close(sock_data);
-      sock_data = 0;
+      RCLCPP_ERROR(this->get_logger(), "Failed to create data socket.");
+      return false;
     }
+    sock_data = sock_opt.value();
+  }
+
+  int result = connect_nonb(sock_data, (struct sockaddr*)&server_data, sizeof(server_data), 5);
+  if (result < 0)
+  {
+    if (result == -10)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Non-blocking connect failed immediately with errno: %s", strerror(errno));
+    }
+    else if (result == -1)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Connect timed out or failed with error: %s", strerror(errno));
+    }
+    close(sock_data);
+    sock_data = 0;
     return false;
   }
+
   int flags = fcntl(sock_data, F_GETFL, 0);
   fcntl(sock_data, F_SETFL, flags | O_NONBLOCK);
-
-  std::cout << "Client connect to server!! (Data)" << std::endl;
+  RCLCPP_INFO(this->get_logger(), "Successfully connected to server (Data).");
   return true;
 }
+
 int RbRobot::Connect2Server_Command()
 {
-  int ret = 0;
-  if ((ret = connect_nonb(sock_command, (struct sockaddr*)&server_command, sizeof(server_command), 5)) < 0)
+  if (sock_command == 0)
   {
-    if (ret == -10)
+    auto sock_opt = CreateSocket_Data(ip.data(), RB_CMD_PORT);
+    if (!sock_opt.has_value())
     {
-      close(sock_command);
-      sock_command = 0;
+      RCLCPP_ERROR(this->get_logger(), "Failed to create data socket.");
+      return false;
     }
+    sock_command = sock_opt.value();
+  }
+
+  int result = connect_nonb(sock_command, (struct sockaddr*)&server_command, sizeof(server_command), 5);
+  if (result < 0)
+  {
+    if (result == -10)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Non-blocking connect failed immediately with errno: %s", strerror(errno));
+    }
+    else if (result == -1)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Connect timed out or failed with error: %s", strerror(errno));
+    }
+    close(sock_command);
+    sock_command = 0;
     return false;
   }
+
   int flags = fcntl(sock_command, F_GETFL, 0);
   fcntl(sock_command, F_SETFL, flags | O_NONBLOCK);
-
-  std::cout << "Client connect to server!! (Command)" << std::endl;
+  RCLCPP_INFO(this->get_logger(), "Successfully connected to server (Command).");
   return true;
 }
 
@@ -471,7 +525,7 @@ void RbRobot::UpdateRBData()
     std_msgs::msg::Empty myMsg;
     rviz_update_state_pub_->publish(myMsg);
 
-    std::cout << "Update Start Pose" << std::endl;
+    RCLCPP_INFO(this->get_logger(), "Updated Start Pose");
 
     update_flag = 0;
 
@@ -496,54 +550,76 @@ void RbRobot::Thread_Data()
   int connectCnt = 0;
   int data_req_cnt = 0;
 
-  static std::vector<unsigned char> totalData;
-  static unsigned char recv_data[RX_DATA_SIZE];
+  std::vector<unsigned char> totalData;
+  unsigned char recv_data[RX_DATA_SIZE];
 
   while (threadWorking_Data)
   {
-    usleep(400);
+    std::this_thread::sleep_for(std::chrono::nanoseconds(400));
     if (tcp_status == 0x00)
     {
       // If client was not connected
       if (sock_data == 0)
       {
-        CreateSocket_Data(ip.data(), RB_DATA_PORT);
+        auto sock_opt = CreateSocket_Data(ip.data(), RB_DATA_PORT);
+        if (sock_opt.has_value())
+        {
+          sock_data = sock_opt.value();
+        }
+        else
+        {
+          RCLCPP_ERROR(this->get_logger(), "Socket creation failed.");
+          continue;
+        }
       }
       if (Connect2Server_Data())
       {
         tcp_status = 0x01;
         connectionStatus_Data = true;
         connectCnt = 0;
-
         totalData.clear();
       }
       else
       {
         if (connectCnt % 10 == 0)
         {
-          std::cout << "Connect to Server Failed..(Data)" << std::endl;
+          RCLCPP_INFO(this->get_logger(), "Connect to Server Failed..(Data)");
         }
         connectCnt++;
       }
-      usleep(1000 * 1000);
+      std::this_thread::sleep_for(std::chrono::nanoseconds(1000 * 1000));
     }
     if (tcp_status == 0x01)
     {
       // If client was connected
       tcp_size = recv(sock_data, recv_data, RX_DATA_SIZE, 0);
 
-      if (tcp_size == 0)
+      if (tcp_size == -1)
       {
+        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        {
+          RCLCPP_ERROR(this->get_logger(), "SOCKET ERROR: %s", strerror(errno));
+          // Consider reconnecting or resetting connection state
+          tcp_status = 0x00;
+          connectionStatus_Data = false;
+          close(sock_data);
+          sock_data = 0;
+          continue;  // Skip processing and try reconnecting
+        }
+      }
+      else if (tcp_size == 0)
+      {
+        // Peer has closed the connection
+        RCLCPP_INFO(this->get_logger(), "Socket Disconnected..(Data)");
         tcp_status = 0x00;
         connectionStatus_Data = false;
         close(sock_data);
         sock_data = 0;
-        std::cout << "Socket Disconnected..(Data)" << std::endl;
       }
       else if (tcp_size > 0)
       {
+        // Process received data
         totalData.insert(totalData.end(), &recv_data[0], &recv_data[tcp_size]);
-
         while (totalData.size() > 4)
         {
           if (totalData[0] == '$')
@@ -585,7 +661,6 @@ void RbRobot::Thread_Data()
           }
         }
       }
-
       // request data -----
       data_req_cnt++;
       if (data_req_cnt % 500 == 0)
@@ -618,7 +693,7 @@ void RbRobot::Thread_Command()
 
   while (threadWorking_Command)
   {
-    usleep(100);
+    std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     if (tcp_status == 0x00)
     {
       // If client was not connected
@@ -636,11 +711,11 @@ void RbRobot::Thread_Command()
       {
         if (connectCnt % 10 == 0)
         {
-          std::cout << "Connect to Server Failed..(Command)" << std::endl;
+          RCLCPP_INFO(this->get_logger(), "Connect to Server Failed..(Command)");
         }
         connectCnt++;
       }
-      usleep(1000 * 1000);
+      std::this_thread::sleep_for(std::chrono::nanoseconds(1000 * 1000));
     }
 
     if (tcp_status == 0x01)
@@ -653,13 +728,13 @@ void RbRobot::Thread_Command()
 
         if (temp_str.compare("The command was executed\n") == 0)
         {
-          std::cout << "[o] " << temp_str.data() << std::endl;
+          RCLCPP_INFO(this->get_logger(), "[o] %s", temp_str.data());
 
           command_seq = 4;
         }
         else
         {
-          std::cout << "[x] " << temp_str.data() << std::endl;
+          RCLCPP_INFO(this->get_logger(), "[x] %s", temp_str.data());
         }
       }
     }
@@ -686,11 +761,9 @@ int RbRobot::connect_nonb(int sockfd, const struct sockaddr* saptr, socklen_t sa
     }
   }
 
-  /* Do whatever we want while the connect is taking place. */
-
   if (n == 0)
   {
-    goto done; /* connect completed immediately */
+    goto done;  // connect completed immediately
   }
 
   FD_ZERO(&rset);
@@ -701,9 +774,8 @@ int RbRobot::connect_nonb(int sockfd, const struct sockaddr* saptr, socklen_t sa
 
   if ((n = select(sockfd + 1, &rset, &wset, NULL, nsec ? &tval : NULL)) == 0)
   {
-    close(sockfd); /* timeout */
     errno = ETIMEDOUT;
-    return (-1);
+    return (-1);  // timeout
   }
 
   if (FD_ISSET(sockfd, &rset) || FD_ISSET(sockfd, &wset))
@@ -711,23 +783,21 @@ int RbRobot::connect_nonb(int sockfd, const struct sockaddr* saptr, socklen_t sa
     len = sizeof(error);
     if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
     {
-      return (-1); /* Solaris pending error */
+      return (-1);  // getsockopt failed
     }
   }
   else
   {
-    return -1;
-    //        err_quit("select error: sockfd not set");
+    return -1;  // select error: sockfd not set
   }
 
 done:
-  fcntl(sockfd, F_SETFL, flags); /* restore file status flags */
+  fcntl(sockfd, F_SETFL, flags);  // restore file status flags
 
   if (error)
   {
-    close(sockfd); /* just in case */
     errno = error;
-    return (-1);
+    return (-1);  // connect error
   }
-  return (0);
+  return (0);  // success
 }

@@ -61,7 +61,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
 )
 
 target_link_libraries(${PROJECT_NAME}_node
-  rb_connector_lib
+  ${PROJECT_NAME}_lib
 )
 
 # rosidl_target_interfaces(rb_connector_lib
@@ -72,20 +72,29 @@ target_link_libraries(${PROJECT_NAME}_node
 #   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 # )
 
-# install(TARGETS ${PROJECT_NAME}_lib ${PROJECT_NAME}_node
-#   EXPORT export_${PROJECT_NAME}
-#   DESTINATION lib/${PROJECT_NAME}
-# )
+install(TARGETS ${PROJECT_NAME}_lib
+  EXPORT export_${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME}
+)
 
-# install(DIRECTORY include/
-#   DESTINATION include
-# )
+install(TARGETS ${PROJECT_NAME}_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
-# install(DIRECTORY
-#   launch
-#   msg
-#   DESTINATION share/${PROJECT_NAME}
-# )
+install(DIRECTORY include/
+  DESTINATION include
+)
+
+install(DIRECTORY
+  launch
+  msg
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  launch/rb_connector.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_export_dependencies(rosidl_default_runtime)
 ament_export_include_directories(include)

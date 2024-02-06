@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- Cobot Robot -->
-<robot name="rb10" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="RB10" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- Constants for robot dimensions -->
   <xacro:property name="PI" value="3.1415926535897931"/>

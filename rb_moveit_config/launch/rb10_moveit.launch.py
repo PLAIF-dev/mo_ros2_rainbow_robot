@@ -9,16 +9,8 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
-            'ip', default_value='10.0.2.7',
+            'ip', default_value='192.168.1.139',
             description='IP address for the rb_connector'),
-
-        DeclareLaunchArgument(
-            'pipeline', default_value='ompl',
-            description='Planning pipeline to use'),
-
-        DeclareLaunchArgument(
-            'load_robot_description', default_value='true',
-            description='Whether to load the robot description'),
 
         # Set robot_description parameter
         Node(
@@ -30,7 +22,7 @@ def generate_launch_description():
                     FindExecutable(name='xacro'), 
                     ' ', 
                     PathJoinSubstitution([
-                        FindPackageShare('rb_description'), 'urdf', 'rb10_moveit.xacro'
+                        FindPackageShare('rb_moveit_config'), 'config', 'rb10.urdf.xacro'
                     ])
                 ])
             }],
@@ -39,7 +31,7 @@ def generate_launch_description():
         # rb_connector Node
         Node(
             package='rb_connector',
-            executable='rb_connector',
+            executable='rb_connector_node',
             name='rb_connector',
             parameters=[{
                 'ip': LaunchConfiguration('ip')
@@ -50,15 +42,13 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 PathJoinSubstitution([
-                    FindPackageShare('rb10_moveit_config'), 'launch', 'move_group.launch.py'
+                    FindPackageShare('rb_moveit_config'), 'launch', 'move_group.launch.py'
                 ])
             ]),
             launch_arguments={
                 'allow_trajectory_execution': 'true',
                 'fake_execution': 'false',
                 'info': 'true',
-                'pipeline': LaunchConfiguration('pipeline'),
-                'load_robot_description': LaunchConfiguration('load_robot_description'),
                 'publish_monitored_planning_scene': 'true',
             }.items()),
 
@@ -67,6 +57,6 @@ def generate_launch_description():
             package='rviz2',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d', PathJoinSubstitution([FindPackageShare('rb_description'), 'launch', 'rb10_moveit.rviz'])],
+            arguments=['-d', PathJoinSubstitution([FindPackageShare('rb_moveit_config'), 'launch', 'moveit.rviz'])],
             output='screen'),
     ])
