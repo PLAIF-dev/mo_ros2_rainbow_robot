@@ -1,0 +1,237 @@
+<?xml version="1.0"?>
+<!-- Cobot Robot -->
+<robot name="rb10" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Constants for robot dimensions -->
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  
+  <xacro:property name="base2module1" value="0.197"/>
+  <xacro:property name="pipe1_len" value="0.6127"/>
+  <xacro:property name="pipe2_len" value="0.57015"/>
+  <xacro:property name="wrist2wrist" value="0.11715"/>
+  <xacro:property name="elbow_offset" value="0.1484"/>
+  <xacro:property name="base_offset" value="0.1875"/> <!--0.7 -->
+  <xacro:property name="wrist2tcp" value="0.1153"/> 
+
+
+ <material name="grey">
+        <color rgba="0.2 0.2 0.2 1.0" />
+ </material>
+
+
+
+ <!--======================= Links =========================-->
+
+ <!-- Base Footprint -->
+ <link name="base_footprint">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+</link>
+
+<!-- 0 -->
+<link name="Axis_0">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://rb_description/meshes/visual/RB10/RB10-AXIS-0.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://rb_description/meshes/collision/RB10/RB10-AXIS-0.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+
+
+<!-- Base -->
+<link name="Axis_1">
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://rb_description/meshes/visual/RB10/RB10-AXIS-1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://rb_description/meshes/collision/RB10/RB10-AXIS-1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+
+<!-- Shoulder -->
+<link name="Axis_2">
+  <visual>
+    <origin xyz="0 0 ${-base2module1}" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://rb_description/meshes/visual/RB10/RB10-AXIS-2.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 ${-base2module1}" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://rb_description/meshes/collision/RB10/RB10-AXIS-2.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+
+<!-- Elbow -->
+<link name="Axis_3">
+  <visual>
+    <origin xyz="0 0 ${-base2module1-pipe1_len} " rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://rb_description/meshes/visual/RB10/RB10-AXIS-3.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 ${-base2module1-pipe1_len}" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://rb_description/meshes/collision/RB10/RB10-AXIS-3.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+
+<!-- Wrist1 -->
+<link name="Axis_4">
+  <visual>
+    <origin xyz="0 0 ${-base2module1-pipe1_len-pipe2_len}" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://rb_description/meshes/visual/RB10/RB10-AXIS-4.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 ${-base2module1-pipe1_len-pipe2_len}" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://rb_description/meshes/collision/RB10/RB10-AXIS-4.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+
+<!-- Wrist2 -->
+<link name="Axis_5">
+  <visual>
+    <origin xyz="0 ${base_offset - elbow_offset + wrist2wrist}  ${-base2module1-pipe1_len-pipe2_len}" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://rb_description/meshes/visual/RB10/RB10-AXIS-5.stl" scale="0.001 0.001 0.001" />
+    </geometry>
+    <material name="grey"/>
+  </visual>
+  <collision>
+    <origin xyz="0 ${base_offset - elbow_offset + wrist2wrist}  ${-base2module1-pipe1_len-pipe2_len}" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://rb_description/meshes/collision/RB10/RB10-AXIS-5.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+
+<!-- Wrist3 -->
+<link name="Axis_6">
+  <visual>
+    <origin xyz="0 ${base_offset - elbow_offset + wrist2wrist} ${-base2module1-pipe1_len-pipe2_len-wrist2wrist }" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://rb_description/meshes/visual/RB10/RB10-AXIS-6.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+  <collision>
+    <origin xyz="0 ${base_offset - elbow_offset + wrist2wrist} ${-base2module1-pipe1_len-pipe2_len-wrist2wrist }" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://rb_description/meshes/collision/RB10/RB10-AXIS-6.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<!-- TCP -->
+<link name="Tool_Center_Point">
+  <visual>
+     <origin xyz="${wrist2wrist} 0 ${-base2module1-pipe1_len-pipe2_len-wrist2wrist }" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="grey"/>
+  </visual>
+</link>
+
+
+
+<!-- Joint -->
+<joint name="ground" type="fixed">
+  <parent link="base_footprint"/>
+  <child link="Axis_0"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <axis xyz="0 0 1" />
+</joint>
+
+<joint name="base" type="continuous">
+  <parent link="Axis_0"/>
+  <child link="Axis_1"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <axis xyz="0 0 1" />
+</joint>
+
+
+<joint name="shoulder" type="continuous">
+  <parent link="Axis_1"/>
+  <child link="Axis_2"/>
+  <origin xyz="0 0 ${base2module1} " rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+</joint>
+
+
+<joint name="elbow" type="continuous">
+  <parent link="Axis_2"/>
+  <child link="Axis_3"/>
+  <origin xyz="0 0 ${pipe1_len}" rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+</joint>
+
+
+<joint name="wrist1" type="continuous">
+  <parent link="Axis_3"/>
+  <child link="Axis_4"/>
+  <origin xyz="0 0 ${pipe2_len}" rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+</joint>
+
+<joint name="wrist2" type="continuous">
+  <parent link="Axis_4"/>
+  <child link="Axis_5"/>
+  <origin xyz="0 ${-base_offset + elbow_offset - wrist2wrist} 0 " rpy="0 0 0"/>
+  <axis xyz="0 0 1"/>
+</joint>
+
+
+<joint name="wrist3" type="continuous">
+  <parent link="Axis_5"/>
+  <child link="Axis_6"/>
+  <origin xyz="0 0 ${wrist2wrist}" rpy="0 0 0"/>
+  <!-- ${base_offset - elbow_offset + wrist2wrist} ${wrist2wrist} -->
+  <axis xyz="0 1 0"/>
+</joint>
+
+<joint name="Tool_Flange" type="fixed">
+  <parent link="Axis_6"/>
+  <child link="Tool_Center_Point"/>
+  <origin xyz="0 ${-wrist2tcp} 0" rpy="0 0 0"/>
+  <axis xyz="0 0 0"/>
+</joint>
+
+</robot>

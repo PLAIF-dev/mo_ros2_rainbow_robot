@@ -1,0 +1,77 @@
+<launch>
+
+  
+
+  <arg name="model" default="rb5"/>
+
+  <arg name="pipeline" default="ompl" />
+  <arg name="load_robot_description" default="true"/>
+   
+
+  <group if="$(eval arg('model') == 'rb5')">
+    <param name="robot_description" command="$(find xacro)/xacro  '$(find rb_description)/urdf/rb5_moveit.xacro'"/>
+    <include file="$(find rb5_moveit_config)/launch/move_group.launch">
+     <arg name="allow_trajectory_execution" value="true"/>
+     <arg name="fake_execution" value="false"/>
+     <arg name="info" value="true"/>
+     <arg name="pipeline" value="$(arg pipeline)"/>
+     <arg name="load_robot_description" value="$(arg load_robot_description)"/>
+     <arg name="publish_monitored_planning_scene" value="true" />
+    </include>
+
+     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rb5_moveit_config)/launch/moveit.rviz"/>
+  </group>
+
+  <group if="$(eval arg('model') == 'rb3')">
+    <param name="robot_description" command="$(find xacro)/xacro  '$(find rb_description)/urdf/rb3_moveit.xacro'"/>
+    <include file="$(find rb3_moveit_config)/launch/move_group.launch">
+     <arg name="allow_trajectory_execution" value="true"/>
+     <arg name="fake_execution" value="false"/>
+     <arg name="info" value="true"/>
+     <arg name="pipeline" value="$(arg pipeline)"/>
+     <arg name="load_robot_description" value="$(arg load_robot_description)"/>
+     <arg name="publish_monitored_planning_scene" value="true" /> 
+    </include>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rb3_moveit_config)/launch/moveit.rviz"/>
+  </group>
+
+
+  <group if="$(eval arg('model') == 'rb10')">
+    <param name="robot_description" command="$(find xacro)/xacro  '$(find rb_description)/urdf/rb10_moveit.xacro'"/>
+    <include file="$(find rb10_moveit_config)/launch/move_group.launch">
+     <arg name="allow_trajectory_execution" value="true"/>
+     <arg name="fake_execution" value="false"/>
+     <arg name="info" value="true"/>
+     <arg name="pipeline" value="$(arg pipeline)"/>
+     <arg name="load_robot_description" value="$(arg load_robot_description)"/>
+     <arg name="publish_monitored_planning_scene" value="true" /> 
+    </include>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rb10_moveit_config)/launch/moveit.rviz"/>
+  </group>
+
+
+  <!-- <param name="robot_description" command="$(find xacro)/xacro  '$(find rb_description)/urdf/rb5_moveit.xacro'"/> -->
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+
+
+  <arg name="ip" default="192.168.1.239"/> <!-- default 10.0.2.7 -->
+
+  <node name="rb_connector" pkg="rb_connector" type="rb_connector" output="screen">
+    <param name="ip" value="$(arg ip)"/> 
+  </node>
+  
+  
+
+
+
+</launch>
+
+
+
+ 
+
+
+
