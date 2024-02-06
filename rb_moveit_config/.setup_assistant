@@ -1,0 +1,27 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: rb_description
+    relative_path: urdf/rb10_moveit.xacro
+  srdf:
+    relative_path: config/rb10.srdf
+  package_settings:
+    author_name: jhlee
+    author_email: jhlee@plaif.com
+    generated_timestamp: 1707097932
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+      - effort
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+      - effort
