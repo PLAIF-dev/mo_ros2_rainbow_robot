@@ -23,7 +23,7 @@
  <!--======================= Links =========================-->
 
  <!-- Base Footprint -->
- <link name="base_footprint">
+ <link name="base_link">
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
@@ -160,21 +160,29 @@
 </link>
 
 <!-- TCP -->
-<link name="Tool_Center_Point">
+<link name="Tool_Vacuum">
   <visual>
-     <origin xyz="${wrist2wrist} 0 ${-base2module1-pipe1_len-pipe2_len-wrist2wrist }" rpy="0 0 0"/>
+    <origin xyz="0 -0.081 0" rpy="0 0 0"/>
     <geometry>
-      <box size="0.001 0.001 0.001"/>
+      <!-- <mesh filename="package://rb_description/meshes/visual/gripper_frame.stl" scale="0.001 0.001 0.001"/> -->
+      <box size="0.270 0.175 0.240"/>
     </geometry>
     <material name="grey"/>
+    <collision>
+      <box size="0.270 0.175 0.240"/>
+    </collision>
   </visual>
+</link>
+
+<link name="tcp_link">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
 </link>
 
 
 
 <!-- Joint -->
 <joint name="ground" type="fixed">
-  <parent link="base_footprint"/>
+  <parent link="base_link"/>
   <child link="Axis_0"/>
   <origin xyz="0 0 0" rpy="0 0 0"/>
   <axis xyz="0 0 1" />
@@ -229,8 +237,15 @@
 
 <joint name="Tool_Flange" type="fixed">
   <parent link="Axis_6"/>
-  <child link="Tool_Center_Point"/>
+  <child link="Tool_Vacuum"/>
   <origin xyz="0 ${-wrist2tcp} 0" rpy="0 0 0"/>
+  <axis xyz="0 0 0"/>
+</joint>
+
+<joint name="tool_tcp" type="fixed">
+  <parent link="Tool_Vacuum"/>
+  <child link="tcp_link"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
   <axis xyz="0 0 0"/>
 </joint>
 
