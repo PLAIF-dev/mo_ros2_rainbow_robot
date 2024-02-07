@@ -9,8 +9,7 @@
     <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
-    <group name="manipulator">
-        <link name="base_footprint"/>
+    <group name="rb10">
         <link name="Axis_0"/>
         <link name="Axis_1"/>
         <link name="Axis_2"/>
@@ -18,28 +17,48 @@
         <link name="Axis_4"/>
         <link name="Axis_5"/>
         <link name="Axis_6"/>
-        <link name="Tool_Center_Point"/>
-        <joint name="ground"/>
         <joint name="base"/>
         <joint name="shoulder"/>
         <joint name="elbow"/>
         <joint name="wrist1"/>
         <joint name="wrist2"/>
         <joint name="wrist3"/>
-        <joint name="Tool_Flange"/>
-        <chain base_link="Axis_0" tip_link="Tool_Center_Point"/>
+        <chain base_link="base_footprint" tip_link="Tool_Center_Point"/>
     </group>
+    <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
+    <group_state name="Home" group="rb10">
+        <joint name="base" value="0"/>
+        <joint name="elbow" value="0"/>
+        <joint name="shoulder" value="0"/>
+        <joint name="wrist1" value="0"/>
+        <joint name="wrist2" value="0"/>
+        <joint name="wrist3" value="0"/>
+    </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="gripper" parent_link="Axis_6" group="manipulator"/>
+    <end_effector name="Tool_Center_Point" parent_link="Axis_6" group="rb10"/>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="Axis_0" link2="Axis_1" reason="Adjacent"/>
     <disable_collisions link1="Axis_0" link2="Axis_2" reason="Never"/>
     <disable_collisions link1="Axis_0" link2="Axis_4" reason="Never"/>
+    <disable_collisions link1="Axis_0" link2="Tool_Center_Point" reason="Never"/>
+    <disable_collisions link1="Axis_0" link2="base_footprint" reason="Adjacent"/>
     <disable_collisions link1="Axis_1" link2="Axis_2" reason="Adjacent"/>
     <disable_collisions link1="Axis_1" link2="Axis_4" reason="Never"/>
+    <disable_collisions link1="Axis_1" link2="Tool_Center_Point" reason="Never"/>
+    <disable_collisions link1="Axis_1" link2="base_footprint" reason="Never"/>
     <disable_collisions link1="Axis_2" link2="Axis_3" reason="Adjacent"/>
+    <disable_collisions link1="Axis_2" link2="Tool_Center_Point" reason="Never"/>
+    <disable_collisions link1="Axis_2" link2="base_footprint" reason="Never"/>
     <disable_collisions link1="Axis_3" link2="Axis_4" reason="Adjacent"/>
+    <disable_collisions link1="Axis_3" link2="Tool_Center_Point" reason="Never"/>
     <disable_collisions link1="Axis_4" link2="Axis_5" reason="Adjacent"/>
     <disable_collisions link1="Axis_4" link2="Axis_6" reason="Never"/>
+    <disable_collisions link1="Axis_4" link2="Tool_Center_Point" reason="Never"/>
+    <disable_collisions link1="Axis_4" link2="base_footprint" reason="Never"/>
     <disable_collisions link1="Axis_5" link2="Axis_6" reason="Adjacent"/>
+    <disable_collisions link1="Axis_5" link2="Tool_Center_Point" reason="Never"/>
+    <disable_collisions link1="Axis_5" link2="base_footprint" reason="Never"/>
+    <disable_collisions link1="Axis_6" link2="Tool_Center_Point" reason="Adjacent"/>
+    <disable_collisions link1="Axis_6" link2="base_footprint" reason="Never"/>
+    <disable_collisions link1="Tool_Center_Point" link2="base_footprint" reason="Never"/>
 </robot>

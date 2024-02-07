@@ -1,0 +1,12 @@
+controller_list:
+  - name: fake_rb10_controller
+    joints:
+      - base
+      - shoulder
+      - elbow
+      - wrist1
+      - wrist2
+      - wrist3
+initial:  # Define initial robot poses.
+  - group: rb10
+    pose: Home
