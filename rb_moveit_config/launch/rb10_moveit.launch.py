@@ -9,7 +9,7 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
-            'ip', default_value='192.168.1.139',
+            'ip', default_value='10.0.2.7',
             description='IP address for the rb_connector'),
 
         # Set robot_description parameter

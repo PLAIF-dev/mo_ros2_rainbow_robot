@@ -19,14 +19,13 @@ RbRobot::RbRobot()
 
 void RbRobot::initialize()
 {
-  default_ip = "192.168.1.139";
+  default_ip = "10.0.2.7";
 
   this->declare_parameter<std::string>("ip", default_ip);
+  this->set_parameter(rclcpp::Parameter("ip", default_ip));
   this->get_parameter("ip", ip);
 
-  this->set_parameter(rclcpp::Parameter("ip", default_ip));
-
-  RCLCPP_INFO(this->get_logger(), "RB IP : %s", default_ip.c_str());
+  RCLCPP_INFO(this->get_logger(), "RB IP : %s", ip.c_str());
 
   joint_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 100);
   rb_command_pub_ = this->create_publisher<rb_connector::msg::RbCommand>("/rb_command", 10);

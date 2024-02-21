@@ -15,12 +15,12 @@ def generate_launch_description():
             description='Robot model'
         ),
         DeclareLaunchArgument(
-            'ip', default_value='192.168.1.139',
+            'ip', default_value='10.0.2.7',
             description='IP address for the rb_connector'
         ),
         Node(
             package='rb_connector',
-            executable='rb_connector',
+            executable='rb_connector_node',
             name='rb_connector',
             parameters=[{'ip': LaunchConfiguration('ip')}],
             output='screen'
